@@ -4,6 +4,8 @@ import pt.lsts.imc.*
 import pt.lsts.imc.adapter.ImcAdapter
 import pt.lsts.imc.net.Consume
 import pt.lsts.imc.net.IMCProtocol
+import pt.lsts.imc.test.Geo
+import pt.lsts.imc.test.KnownGeos
 import pt.lsts.neptus.messages.listener.Periodic
 
 fun <T : IMCMessage> msg(msg: Class<T>, builder: T.() -> Unit): T {
@@ -11,6 +13,7 @@ fun <T : IMCMessage> msg(msg: Class<T>, builder: T.() -> Unit): T {
     m.builder()
     return m;
 }
+
 
 //Plain Old Kotlin Object (POKO) that will handle incoming data
 class ImcAgent(name: String, id: Int, port: Int, type: Announce.SYS_TYPE) : ImcAdapter(name, id, port, type) {
@@ -30,16 +33,18 @@ class ImcAgent(name: String, id: Int, port: Int, type: Announce.SYS_TYPE) : ImcA
     // Message creation and sending
     fun sendPlanControl() {
 
+        val pt1 = KnownGeos.APDL.translatedBy(0.0, 150.0)
+
         val pc = msg(PlanControl::class.java) {
             requestId = ++req_id
-            info = "Sample plan"
+            info = "Go to APDL"
             type = PlanControl.TYPE.REQUEST
             op = PlanControl.OP.START
             flags = PlanControl.FLG_CALIBRATE
 
             arg = msg(Goto::class.java) {
-                lat = Math.toRadians(41.0)
-                lon = Math.toRadians(-9.0)
+                lat = pt1.lat.asRadians()
+                lon = pt1.lon.asRadians()
                 z = 2.0
                 zUnits = Goto.Z_UNITS.DEPTH
                 speed = 1.0
