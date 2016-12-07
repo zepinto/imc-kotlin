@@ -1,0 +1,52 @@
+buildscript {
+    ext.kotlin_version = '1.0.5'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: "kotlin"
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+mainClassName = 'pt.lsts.TestKt'
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    testCompile 'junit:junit:4.11'
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    compile name: 'libimc'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "2.7"
+}
+
+jar {
+
+    manifest {
+        attributes "Main-Class": "$mainClassName"
+    }
+
+    doFirst {
+        from (configurations.runtime.resolve().collect { it.isDirectory() ? it : zipTree(it) }) {
+            exclude 'META-INF/MANIFEST.MF'
+            exclude 'META-INF/*.SF'
+            exclude 'META-INF/*.DSA'
+            exclude 'META-INF/*.RSA'
+            exclude '**/*.java'
+        }
+    }
+}
+
+defaultTasks 'run'
