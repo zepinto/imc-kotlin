@@ -1,18 +1,57 @@
+package pt.lsts.imc.kotlin
+
 import pt.lsts.imc.*
 import pt.lsts.imc.test.Geo
 import pt.lsts.imc.test.KnownGeos
+import pt.lsts.imc.test.deg
 import pt.lsts.msg
-import java.time.Duration
-import java.util.*
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JScrollPane
+
+fun plan(id: String, init: Plan.() -> Unit): Plan {
+    val p = Plan(id)
+    p.init()
+    return p
+}
+
+fun debug(msg: IMCMessage) {
+    val frm = JFrame("Contents for ${msg.abbrev}")
+
+    frm.contentPane = JScrollPane(JLabel(IMCUtil.getAsHtml(msg)))
+    frm.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+    frm.setSize(800, 600)
+    frm.isVisible = true
+}
+
+
+data class Z(var value: Double, var units: Units) {
+    enum class Units {
+        DEPTH,
+        ALTITUDE,
+        HEIGHT,
+        NONE
+    }
+
+    fun units() = units.toString()
+}
+
+data class Speed(var value: Double, var units: Units) {
+    enum class Units {
+        METERS_PS,
+        PERCENTAGE,
+        RPM
+    }
+
+    fun units() = units.toString()
+}
 
 class Plan(val id: String) {
 
     var mans = emptyArray<PlanManeuver>()
-
-    var loc: Geo = KnownGeos.APDL.translatedBy(0.0, -200.0)
-    var speed = 1.0
-    var z = 0.0
-    var z_units = "DEPTH"
+    var loc: Geo = KnownGeos.APDL
+    var speed = Speed(1.0, Speed.Units.METERS_PS)
+    var z = Z(0.0, Z.Units.DEPTH)
     var count = 1
 
     fun <T : Maneuver> maneuver(id: String, m: Class<T>): T {
@@ -21,13 +60,13 @@ class Plan(val id: String) {
             data = msg(m) {
                 setValue("lat", loc.lat.asRadians())
                 setValue("lon", loc.lon.asRadians())
-                setValue("speed", speed)
-                setValue("speed_units", "METERS_PS")
-                setValue("z", z)
-                setValue("z_units", z_units)
+                setValue("speed", speed.value)
+                setValue("speed_units", speed.units)
+                setValue("z", z.value)
+                setValue("z_units", z.units())
             }
         }
-        mans += pman;
+        mans += pman
         return pman.data as T
     }
 
@@ -58,20 +97,20 @@ class Plan(val id: String) {
     fun popup(id: String = "${count++}", duration: Int = 180, currPos: Boolean = true): PopUp {
         val popup = maneuver(id, PopUp::class.java)
         popup.duration = duration
-        popup.flags = if (currPos) PopUp.FLG_CURR_POS else 0;
+        popup.flags = if (currPos) PopUp.FLG_CURR_POS else 0
         return popup
     }
 
     fun imc(): PlanSpecification {
         return msg(PlanSpecification::class.java) {
-            planId = id;
+            planId = id
             startManId = mans[0].maneuverId
             setManeuvers(mans.asList())
             setTransitions(transitions().asList())
         }
     }
 
-    fun transitions(): Array<PlanTransition> {
+    private fun transitions(): Array<PlanTransition> {
         var trans = emptyArray<PlanTransition>()
         var previous: PlanManeuver? = null
 
@@ -85,18 +124,42 @@ class Plan(val id: String) {
             previous = m
         }
 
-        return trans;
+        return trans
     }
 }
 
 fun main(args: Array<String>) {
-    var plan = Plan("my_plan")
-    plan.speed = 1.2
-    plan.z_units = "ALTITUDE"
-    plan.z = 5.0
-    plan.goto()
-    plan.loc = plan.loc.translatedBy(100.0, 0.0)
-    plan.loiter(duration = 3*60)
-    println(plan.imc().asXml(false))
+
+    // Plan builder
+    var p = plan("KotlinPlan") {
+
+        // set current plan location
+        loc = Geo(41.185242.deg(), -8.704803.deg())
+
+        // set speed units to use
+        speed.units = Speed.Units.METERS_PS
+        speed.value = 1.2
+
+        // set z reference to use
+        z.value = 5.0
+        z.units = Z.Units.ALTITUDE
+
+        // add goto at this location
+        goto()
+
+        // change location
+        loc = loc.translatedBy(100.0, 0.0)
+
+        // change z value (but not changing reference)
+        z.value = 4.0
+
+        // add loiter using default radius but using 4 minutes duration
+        loiter(duration = 240)
+    }
+
+    // Get the plan as IMC
+    val planImc = p.imc()
+
+    debug(planImc)
 }
 

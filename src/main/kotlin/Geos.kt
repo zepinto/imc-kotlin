@@ -1,4 +1,4 @@
-package pt.lsts.imc.test
+package pt.lsts.imc.kotlin
 
 import pt.lsts.util.WGS84Utilities
 

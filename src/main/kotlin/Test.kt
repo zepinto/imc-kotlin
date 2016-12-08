@@ -1,11 +1,8 @@
-package pt.lsts
+package pt.lsts.imc.kotlin
 
 import pt.lsts.imc.*
 import pt.lsts.imc.adapter.ImcAdapter
 import pt.lsts.imc.net.Consume
-import pt.lsts.imc.net.IMCProtocol
-import pt.lsts.imc.test.Geo
-import pt.lsts.imc.test.KnownGeos
 import pt.lsts.neptus.messages.listener.Periodic
 
 fun <T : IMCMessage> msg(msg: Class<T>, builder: T.() -> Unit): T {
