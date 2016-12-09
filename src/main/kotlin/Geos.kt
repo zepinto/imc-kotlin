@@ -23,6 +23,8 @@ object KnownGeos {
 
 data class Geo constructor(val lat: Angle, val lon: Angle) {
 
+    constructor(lat: Double, lon: Double) : this(lat.deg(), lon.deg())
+
     infix fun distance(l: Geo): Double {
         val offsets = offsets(l)
         return Math.hypot(offsets.first, offsets.second)
@@ -33,8 +35,8 @@ data class Geo constructor(val lat: Angle, val lon: Angle) {
         return Math.atan2(offsets.second, offsets.first).rad()
     }
 
-    fun translatedBy(northing: Double, easting: Double): Geo {
-        val coords = WGS84Utilities.WGS84displace(lat.asDegrees(), lon.asDegrees(), 0.0, northing, easting, 0.0)
+    fun translatedBy(northing: Number, easting: Number): Geo {
+        val coords = WGS84Utilities.WGS84displace(lat.asDegrees(), lon.asDegrees(), 0.0, northing.toDouble(), easting.toDouble(), 0.0)
         return Geo(coords[0].deg(), coords[1].deg())
     }
 
