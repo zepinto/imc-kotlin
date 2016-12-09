@@ -67,31 +67,31 @@ class Plan(val id: String) {
 
     fun goto(id: String = "${count++}") = maneuver(id, Goto::class.java)
 
-    fun skeeping(id: String = "${count++}", radius: Double = 20.0, duration: Int = 0): StationKeeping {
+    fun skeeping(id: String = "${count++}", radius: Number = 20.0, duration: Number = 0): StationKeeping {
         val man = maneuver(id, StationKeeping::class.java)
-        man.duration = duration
-        man.radius = radius
+        man.duration = duration.toInt()
+        man.radius = radius.toDouble()
         return man
     }
 
-    fun loiter(id: String = "${count++}", radius: Double = 20.0, duration: Int = 600): Loiter {
+    fun loiter(id: String = "${count++}", radius: Number = 20.0, duration: Number = 600): Loiter {
         val loiter = maneuver(id, Loiter::class.java)
-        loiter.duration = duration
+        loiter.duration = duration.toInt()
         loiter.type = Loiter.TYPE.CIRCULAR
-        loiter.radius = radius
+        loiter.radius = radius.toDouble()
         return loiter
     }
 
-    fun yoyo(id: String = "${count++}", max_depth: Double = 20.0, min_depth: Double = 2.0): YoYo {
+    fun yoyo(id: String = "${count++}", max_depth: Number = 20.0, min_depth: Number = 2.0): YoYo {
         val yoyo = maneuver(id, YoYo::class.java)
-        yoyo.amplitude = (max_depth - min_depth)
-        yoyo.z = (max_depth + min_depth) / 2.0
+        yoyo.amplitude = (max_depth.toDouble() - min_depth.toDouble())
+        yoyo.z = (max_depth.toDouble() + min_depth.toDouble()) / 2.0
         return yoyo
     }
 
-    fun popup(id: String = "${count++}", duration: Int = 180, currPos: Boolean = true): PopUp {
+    fun popup(id: String = "${count++}", duration: Number = 180, currPos: Boolean = true): PopUp {
         val popup = maneuver(id, PopUp::class.java)
-        popup.duration = duration
+        popup.duration = duration.toInt()
         popup.flags = if (currPos) PopUp.FLG_CURR_POS else 0
         return popup
     }
@@ -144,8 +144,10 @@ fun main(args: Array<String>) {
     // Plan builder
     var plan = plan("KotlinPlan") {
 
+        val home = Geo(41.185242, -8.704803)
+
         // set current plan location
-        locate(41.185242, -8.704803)
+        locate(home)
 
         // set speed units to use
         speed.units = MPS
@@ -158,7 +160,7 @@ fun main(args: Array<String>) {
         // add goto at current location
         goto()
 
-        // change location
+        // change current location
         move(100, 0)
 
         // change z value (but not changing reference)
